@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+#Checking root permissions
+if [ "$(id -u)" != 0 ]
+then
+  echo root premission required >&2
+  exit 1
+fi
+
+
+create_user(){
+#Sudoers
+if [ "$group" = it ] || [ "$group" = security ]
+then
+  if ! grep "%$group" /etc/sudoers
+  then
+    cp /etc/sudoers{,.bkp}
+    echo '%'$group' ALL=(ALL) ALL' >> /etc/sudoers
+    echo $user' ALL=(ALL) ALL' >> /etc/sudoers
+  fi
+  shell=/bin/bash
+fi
+
+#Create group, directory and user
+groupadd $group
+mkdir /home/$group
+useradd $user -g $group -b /home/$group -s $shell
+}
+
+
+#Variables
+shell=/sbin/nologin
+select var in "Add user" "Exit"
+do case $var in
+  "Add user")
+    read -p "Print username: " user
+    read -p "Print groupname: " group
+    create_user;;
+  "Exit")
+    break;;
+  *) echo Error;;
+esac
+done
